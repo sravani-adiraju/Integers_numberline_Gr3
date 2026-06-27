@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Mario: Integer Quest</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        :root {
+            --mario-red: #e52521;
+            --mario-blue: #049cd8;
+            --mario-yellow: #fbd000;
+            --mario-green: #43b047;
+            --sky-blue: #5c94fc;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Press+Start+2P', cursive;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+
+        #game-container {
+            width: 800px;
+            height: 500px;
+            background: var(--sky-blue);
+            border: 6px solid #000;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Screen States */
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
+        .active { display: flex; }
+
+        /* HUD */
+        #hud {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            box-sizing: border-box;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        /* Question Area */
+        #question-box {
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* The Number Line */
+        #number-line-wrapper {
+            position: relative;
+            width: 700px;
+            height: 150px;
+            margin-top: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        #line-main {
+            position: absolute;
+            top: 100px;
+            left: 50px;
+            width: 600px;
+            height: 4px;
+            background: white;
+        }
+
+        .tick {
+            position: absolute;
+            width: 4px;
+            height: 20px;
+            background: white;
+            top: -8px;
+        }
+
+        .tick-label {
+            position: absolute;
+            top: 25px;
+            left: -10px;
+            font-size: 8px;
+            width: 25px;
+            text-align: center;
+        }
+
+        /* Mario Sprite */
+        #mario {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            bottom: 54px; /* Sits right on the line */
+            left: 325px; /* Starting at 0 */
+            transition: left 0.6s cubic-bezier(0.42, 0, 0.58, 1);
+            z-index: 100;
+            filter: drop-shadow(2px 2px 0px #000);
+        }
+
+        /* Inputs */
+        input {
+            font-family: 'Press+Start+2P';
+            padding: 10px;
+            border: 4px solid var(--mario-yellow);
+            outline: none;
+            text-align: center;
+        }
+
+        .btn {
+            font-family: 'Press+Start+2P';
+            background: var(--mario-green);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 0px #2a702d;
+        }
+
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+
+        #feedback {
+            height: 30px;
+            margin-top: 10px;
+            color: var(--mario-yellow);
+            font-size: 12px;
+        }
+
+        /* Certificate */
+        #certificate {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border: 10px double var(--mario-red);
+            text-align: center;
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+            background: #924500;
+            border-top: 4px solid #4e2500;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- Login -->
+    <div id="login-screen" class="screen active">
+        <h1 style="color:var(--mario-red); text-shadow: 4px 4px #000;">MATH MARIO</h1>
+        <p>STAGE 6: INTEGERS</p>
+        <input type="text" id="player-name" placeholder="YOUR NAME" maxlength="12">
+        <button class="btn" onclick="startGame()">START QUEST</button>
+    </div>
+
+    <!-- Game -->
+    <div id="game-screen" class="screen">
+        <div id="hud">
+            <div>HERO: <span id="display-name">---</span></div>
+            <div>DIAMONDS: <span id="score">0</span></div>
+        </div>
+
+        <div id="question-box">
+            <span id="question-text">Loading...</span>
+        </div>
+
+        <div id="number-line-wrapper">
+            <!-- Mario -->
+            <img id="mario" src="https://img.icons8.com/color/96/super-mario.png" alt="Mario">
+            
+            <div id="line-main">
+                <!-- Ticks will be injected here -->
+            </div>
+        </div>
+
+        <div id="feedback"></div>
+
+        <div style="z-index: 20;">
+            <input type="number" id="answer-input" placeholder="?">
+            <button class="btn" onclick="checkAnswer()">JUMP!</button>
+        </div>
+        
+        <div class="ground"></div>
+    </div>
+
+    <!-- Reward -->
+    <div id="reward-screen" class="screen">
+        <div id="certificate">
+            <h2 style="color:var(--mario-red)">QUEST COMPLETE!</h2>
+            <p>Certified Main Character:</p>
+            <h3 id="cert-name" style="font-size: 20px;"></h3>
+            <p>Score: <span id="final-score"></span>/10 💎</p>
+            <p style="font-size: 10px;">You understand Integers! No Cap.</p>
+        </div>
+        <button class="btn" onclick="location.reload()">REPLAY</button>
+    </div>
+</div>
+
+<script>
+    let score = 0;
+    let currentQ = 0;
+    const totalQ = 10;
+    
+    const questions = [
+        { q: "-3 + 5", a: 2 },
+        { q: "4 - 9", a: -5 },
+        { q: "-2 - 4", a: -6 },
+        { q: "0 + 7", a: 7 },
+        { q: "8 - 10", a: -2 },
+        { q: "-5 + 5", a: 0 },
+        { q: "1 - 6", a: -5 },
+        { q: "-8 + 3", a: -5 },
+        { q: "2 + (-4)", a: -2 },
+        { q: "(-1) - 5", a: -6 }
+    ];
+
+    // Generate Number Line Ticks
+    const lineMain = document.getElementById('line-main');
+    for (let i = -10; i <= 10; i++) {
+        const tick = document.createElement('div');
+        tick.className = 'tick';
+        // 600px width / 20 segments = 30px per unit
+        // Center (0) is at 300px
+        const leftPos = 300 + (i * 30);
+        tick.style.left = leftPos + 'px';
+        
+        tick.innerHTML = `<div class="tick-label">${i}</div>`;
+        lineMain.appendChild(tick);
+    }
+
+    function startGame() {
+        const name = document.getElementById('player-name').value;
+        if(!name) return alert("Enter your name, hero!");
+        
+        document.getElementById('display-name').innerText = name.toUpperCase();
+        document.getElementById('login-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if(currentQ >= totalQ) {
+            endGame();
+            return;
+        }
+        document.getElementById('question-text').innerText = "SOLVE: " + questions[currentQ].q;
+        document.getElementById('answer-input').value = "";
+        document.getElementById('answer-input').focus();
+    }
+
+    function checkAnswer() {
+        const inputField = document.getElementById('answer-input');
+        const userAnswer = parseInt(inputField.value);
+        const correctAnswer = questions[currentQ].a;
+        const feedback = document.getElementById('feedback');
+        const mario = document.getElementById('mario');
+
+        if (isNaN(userAnswer)) return;
+
+        // 1. MOVE MARIO
+        // Math: Center is 325px (mario's left). Each unit is 30px.
+        const newLeft = 325 + (userAnswer * 30);
+        mario.style.left = newLeft + 'px';
+
+        // 2. CHECK LOGIC
+        if (userAnswer === correctAnswer) {
+            score++;
+            document.getElementById('score').innerText = score;
+            feedback.innerHTML = "💎 +1 DIAMOND! GOATED! 💎";
+            feedback.style.color = "var(--mario-yellow)";
+        } else {
+            feedback.innerHTML = "OOF! Correct was " + correctAnswer;
+            feedback.style.color = "white";
+        }
+
+        // 3. NEXT STEPS
+        currentQ++;
+        // Small delay so student sees Mario move
+        setTimeout(() => {
+            feedback.innerHTML = "";
+            loadQuestion();
+        }, 2000);
+    }
+
+    function endGame() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('reward-screen').classList.add('active');
+        document.getElementById('cert-name').innerText = document.getElementById('player-name').value.toUpperCase();
+        document.getElementById('final-score').innerText = score;
+    }
+
+    // Allow "Enter" key to submit
+    document.getElementById('answer-input').addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            checkAnswer();
+        }
+    });
+</script>
+
+</body>
+</html>
