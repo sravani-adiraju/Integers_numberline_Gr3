@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integer Quest: Turbo Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000428;
+            --glass: rgba(255, 255, 255, 0.1);
+            --accent-pink: #ff007f;
+            --accent-blue: #00d4ff;
+            --accent-green: #39ff14;
+            --error-red: #ff3131;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #game-box {
+            width: 90%;
+            max-width: 550px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            position: relative;
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-pink), var(--accent-blue));
+            transition: 0.5s;
+        }
+
+        /* Question visuals */
+        .visual-card {
+            font-size: 4.5rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Number Line Logic */
+        .number-line-container {
+            margin: 40px 0;
+            padding: 0 20px;
+        }
+        .line {
+            height: 4px;
+            background: white;
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+        }
+        .tick {
+            width: 2px;
+            height: 12px;
+            background: rgba(255,255,255,0.5);
+            position: relative;
+            top: -4px;
+        }
+        .tick-label {
+            position: absolute;
+            top: 18px;
+            left: -10px;
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+        }
+        .marker {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            position: absolute;
+            top: -8px;
+            box-shadow: 0 0 15px var(--accent-green);
+            z-index: 5;
+        }
+
+        /* Input & Buttons */
+        input {
+            background: #fff;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            color: #000;
+            font-size: 1.8rem;
+            width: 140px;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        button {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 15px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 10px;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.2);
+        }
+
+        /* FIXED FEEDBACK OVERLAY */
+        #feedback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 30px;
+            display: none; /* Controlled by JS */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .correct-layer {
+            background: rgba(0, 40, 20, 0.95);
+            border: 4px solid var(--accent-green);
+        }
+
+        .wrong-layer {
+            background: rgba(50, 0, 0, 0.95);
+            border: 4px solid var(--error-red);
+        }
+
+        #fb-title {
+            font-size: 3rem;
+            margin: 0;
+            color: white;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+
+        #fb-explanation {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin: 20px 0;
+            color: #e0e0e0;
+        }
+
+        .continue-btn {
+            background: white !important;
+            color: black !important;
+            font-size: 1.4rem !important;
+            padding: 20px 50px !important;
+            box-shadow: 0 0 30px rgba(255,255,255,0.4) !important;
+        }
+
+        .hidden { display: none !important; }
+        .options-grid { display: flex; flex-wrap: wrap; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <div id="game-box">
+        <!-- Start screen -->
+        <div id="start-screen">
+            <div class="visual-card">🔥</div>
+            <h1 style="font-size: 2.8rem; margin: 10px 0;">INTEGER QUEST</h1>
+            <p style="font-size: 1.2rem; opacity: 0.8;">Level up your brain. Are you the GOAT?</p>
+            <button onclick="startGame()">Start Quest ➔</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="progress-container"><div id="progress-bar"></div></div>
+            <div id="q-visual" class="visual-card"></div>
+            <h2 id="q-text" style="font-size: 1.6rem; min-height: 60px;"></h2>
+            
+            <div id="num-line-box" class="number-line-container hidden">
+                <div class="line" id="line-ticks"></div>
+                <div id="marker" class="marker"></div>
+            </div>
+
+            <div id="input-zone"></div>
+        </div>
+
+        <!-- THE FIX: High-contrast Feedback Overlay -->
+        <div id="feedback">
+            <h1 id="fb-title"></h1>
+            <p id="fb-explanation"></p>
+            <button class="continue-btn" onclick="nextQuestion()">Next Question ➔</button>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="hidden">
+            <div class="visual-card">👑</div>
+            <h1 style="font-size: 2.5rem;">QUEST COMPLETE!</h1>
+            <h2 id="final-score" style="color: var(--accent-blue); font-size: 2rem;"></h2>
+            <p id="rank-text" style="font-size: 1.2rem;"></p>
+            <button onclick="startGame()" style="background: var(--accent-pink);">Play Again ➔</button>
+        </div>
+    </div>
+
+    <script>
+        const set1 = [
+            { type: 'mcq', q: "Which is the lowest temperature?", options: ["-10°C", "2°C", "-18°C", "0°C"], correct: "-18°C", icon: "❄️", exp: "-18 is furthest to the left on the number line. Pure ice vibes!" },
+            { type: 'flash', q: "What is the opposite of -67?", correct: "67", icon: "🔄", exp: "Flip the negative to a positive. Easy W!" },
+            { type: 'numline', q: "Start at -2. Move 5 units right. Where are you?", start: -2, correct: "3", icon: "🏃", exp: "-2 + 5 = 3. Moving right is adding!" },
+            { type: 'word', q: "A whale is at -40m. It swims UP 15m. What is its depth?", correct: "-25", icon: "🐋", exp: "-40 + 15 = -25. Getting closer to the sun!" },
+            { type: 'mcq', q: "Which symbol fits? -5 ___ -1", options: [">", "<", "="], correct: "<", icon: "🤔", exp: "-5 is smaller than -1 because it's deeper into the negatives." },
+            { type: 'flash', q: "Calculate: -8 + 3", correct: "-5", icon: "🧮", exp: "You start at -8 and move 3 steps towards zero." },
+            { type: 'numline', q: "Start at 4. Move 7 units left. Where are you?", start: 4, correct: "-3", icon: "⬅️", exp: "4 - 7 = -3. You've crossed into the negative zone!" },
+            { type: 'word', q: "You have $12, but you spend $20. What is your balance?", correct: "-8", icon: "💸", exp: "12 - 20 = -8. You're in overdraft mode!" },
+            { type: 'mcq', q: "Complete the pattern: 6, 3, 0, ___", options: ["-1", "-3", "-6", "1"], correct: "-3", icon: "🔢", exp: "The rule is subtract 3 each time." },
+            { type: 'flash', q: "What is the distance between 0 and -15?", correct: "15", icon: "📏", exp: "Distance is always positive. It's 15 steps away!" }
+        ];
+
+        const set2 = [
+            { type: 'mcq', q: "Which number is greater than -4?", options: ["-10", "-5", "-3", "-8"], correct: "-3", icon: "📈", exp: "-3 is to the right of -4 on the number line!" },
+            { type: 'flash', q: "Temp is 5°C and drops 12°C. New temp?", correct: "-7", icon: "🥶", exp: "5 - 12 = -7. Time for a puffer jacket! ❄️" },
+            { type: 'numline', q: "Start at -5. Move 2 units left. Where are you?", start: -5, correct: "-7", icon: "👣", exp: "Moving left means getting more negative! -5 - 2 = -7." },
+            { type: 'word', q: "Elevator is at -2. It goes up 6 floors. Floor?", correct: "4", icon: "🛗", exp: "-2 + 6 = 4. We are above ground now!" },
+            { type: 'mcq', q: "Which integer is between -2 and 2?", options: ["-3", "5", "1", "-5"], correct: "1", icon: "🎯", exp: "On the line: -2, -1, 0, 1, 2. So 1 is the one!" },
+            { type: 'flash', q: "Opposite of 100?", correct: "-100", icon: "💎", exp: "Swap the sign, keep the number. Simple math." },
+            { type: 'numline', q: "Start at 0. Move 8 units left. Where are you?", start: 0, correct: "-8", icon: "📍", exp: "0 - 8 = -8. Solid movement." },
+            { type: 'word', q: "Climber is at 10m. They fall 15m. Depth?", correct: "-5", icon: "🧗", exp: "10 - 15 = -5. Watch that first step!" },
+            { type: 'mcq', q: "Which is the 'Greatest'?", options: ["-100", "-1", "-50", "-2"], correct: "-1", icon: "👑", exp: "-1 is the king here because it's closest to the positive side!" },
+            { type: 'flash', q: "Calculate: -4 + -4", correct: "-8", icon: "➕", exp: "Double negative debt! -4 and -4 makes -8." }
+        ];
+
+        let questions = [];
+        let currentQIndex = 0;
+        let score = 0;
+        let currentSetIndex = 1;
+
+        const praises = ["NO CAP! 🧢", "W MOMENT! 🔥", "SLAY! 💅", "BIG BRAIN! 🧠", "ABSOLUTE GOAT! 🐐"];
+
+        function startGame() {
+            questions = (currentSetIndex === 1) ? set1 : set2;
+            currentSetIndex = (currentSetIndex === 1) ? 2 : 1;
+            currentQIndex = 0;
+            score = 0;
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function drawNumberLine(startVal) {
+            const container = document.getElementById('line-ticks');
+            container.innerHTML = '';
+            const min = -10;
+            const max = 10;
+            
+            for(let i = min; i <= max; i++) {
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                if(i % 5 === 0 || i === 0) {
+                    tick.innerHTML = `<span class="tick-label">${i}</span>`;
+                    tick.style.height = "20px";
+                    tick.style.background = "white";
+                }
+                container.appendChild(tick);
+            }
+
+            const marker = document.getElementById('marker');
+            const percent = ((startVal - min) / (max - min)) * 100;
+            marker.style.left = `calc(${percent}% - 10px)`;
+        }
+
+        function showQuestion() {
+            const q = questions[currentQIndex];
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('progress-bar').style.width = `${(currentQIndex / 10) * 100}%`;
+            document.getElementById('q-visual').innerText = q.icon;
+            document.getElementById('q-text').innerText = q.q;
+            
+            const inputZone = document.getElementById('input-zone');
+            const numLineBox = document.getElementById('num-line-box');
+            inputZone.innerHTML = '';
+
+            if(q.type === 'numline') {
+                numLineBox.classList.remove('hidden');
+                drawNumberLine(q.start);
+                inputZone.innerHTML = `<input type="number" id="ans" autofocus><br><button onclick="check()">Submit Answer</button>`;
+            } else if(q.type === 'mcq') {
+                numLineBox.classList.add('hidden');
+                let grid = `<div class="options-grid">`;
+                q.options.forEach(opt => {
+                    grid += `<button onclick="check('${opt}')">${opt}</button>`;
+                });
+                grid += `</div>`;
+                inputZone.innerHTML = grid;
+            } else {
+                numLineBox.classList.add('hidden');
+                inputZone.innerHTML = `<input type="number" id="ans" placeholder="?" autofocus><br><button onclick="check()">Submit Answer</button>`;
+            }
+        }
+
+        function check(val) {
+            const q = questions[currentQIndex];
+            const userAns = val || document.getElementById('ans').value;
+            const isCorrect = userAns.toString().trim() === q.correct.toString();
+            
+            const fb = document.getElementById('feedback');
+            const fbTitle = document.getElementById('fb-title');
+            const fbExp = document.getElementById('fb-explanation');
+
+            fb.style.display = 'flex';
+            fb.className = isCorrect ? 'correct-layer' : 'wrong-layer';
+
+            if(isCorrect) {
+                score++;
+                fbTitle.innerText = praises[Math.floor(Math.random() * praises.length)];
+                fbExp.innerText = "Correct! You're built different. Keep that energy!";
+            } else {
+                fbTitle.innerText = "OOF! 💀";
+                fbExp.innerHTML = `The correct answer was <b style="color:var(--accent-blue)">${q.correct}</b>.<br><br>${q.exp}`;
+            }
+        }
+
+        function nextQuestion() {
+            currentQIndex++;
+            if(currentQIndex < 10) {
+                showQuestion();
+            } else {
+                showEnd();
+            }
+        }
+
+        function showEnd() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = `Score: ${score}/10`;
+            
+            let rank = "";
+            if(score === 10) rank = "RANK: MATHEMATICAL GOD 💎";
+            else if(score > 7) rank = "RANK: ABSOLUTE LEGEND 🔥";
+            else if(score > 4) rank = "RANK: CHILL VIBES 🎮";
+            else rank = "RANK: NPC (Try Again!) 🛠️";
+            document.getElementById('rank-text').innerText = rank;
+        }
+    </script>
+</body>
+</html>
